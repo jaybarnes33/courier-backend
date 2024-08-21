@@ -1,39 +1,76 @@
 import { AuthRes } from "./Auth.types";
 import jwt from "jsonwebtoken";
-import RiderModel from "../rider/Rider.model";
+import DriverModel from "../driver/Driver.model";
 import { randomBytes } from "crypto";
 import axios from "axios";
-import Rider from "../rider/Rider.model";
+import UserModel from "../user/User.model";
 
-class RiderService {
-  async authRider(data: { phoneNumber: string }): Promise<{ id: string }> {
-    // Create a new rider using the RiderModel and save it to the database
-    const rider = await RiderModel.findOne({ phoneNumber: data.phoneNumber });
+class AuthService {
+  async authRider(data: { phone: string }): Promise<{ id: string }> {
+    // Create a new rider using the DriverModel and save it to the database
+    const driver = await DriverModel.findOne({ phone: data.phone });
     //@ts-ignore
-    if (rider) {
+    if (driver) {
       const otp = this.generateOtp();
-      rider.otp = otp;
+      driver.otp = otp;
 
-      await this.sendOTP(data.phoneNumber, otp);
-      await rider.save();
+      await this.sendOTP(data.phone, otp);
+      await driver.save();
       return {
-        id: rider._id,
+        id: driver._id,
       };
     } else {
-      const rider = await RiderModel.create(data);
+      const newDriver = await DriverModel.create(data);
+      const otp = this.generateOtp();
+      newDriver.otp = otp;
+
+      await this.sendOTP(data.phone, otp);
+      await newDriver.save();
+      return {
+        id: newDriver._id,
+      };
     }
   }
 
-  async sendOTP(phoneNumber: string, otp: string) {
-    const apiKey = "Olp0RGZDakhDdnRJU2VKR2U=";
-    const senderId = "Plug";
-    const message = `Your OTP is: ${otp}`;
+  async authUser(data: {
+    phone: string;
+    name: string;
+  }): Promise<{ id: string }> {
+    // Create a new rider using the DriverModel and save it to the database
+    const user = await UserModel.findOne({ phone: data.phone });
+    //@ts-ignore
+    if (user) {
+      const otp = this.generateOtp();
+      user.otp = otp;
+
+      await this.sendOTP(data.phone, otp);
+      await user.save();
+      return {
+        id: user._id,
+      };
+    } else {
+      const newUser = await UserModel.create(data);
+      const otp = this.generateOtp();
+      newUser.otp = otp;
+
+      await this.sendOTP(data.phone, otp);
+      await newUser.save();
+      return {
+        id: newUser._id,
+      };
+    }
+  }
+
+  async sendOTP(phone: string, otp: string) {
+    const apiKey = process.env.SMS_KEY;
+    const senderId = "MoveEasy";
+    const message = `Your OTP is: ${otp}. Do not share this OTP with anyone, not even our employees`;
 
     try {
       const response = await axios.post(
         "https://sms.arkesel.com/api/v2/sms/send",
         {
-          recipients: [phoneNumber],
+          recipients: [phone],
           message,
           sender: senderId,
         },
@@ -64,18 +101,24 @@ class RiderService {
     });
     return { accessToken, refreshToken };
   }
-  async verifyOtp(data: {
-    id: string;
-    otp: string;
-  }): Promise<AuthRes | { message: string }> {
-    const rider = await RiderModel.findById(data.id);
+  async verifyOtp(
+    data: {
+      id: string;
+      otp: string;
+    },
+    type: string
+  ): Promise<AuthRes | { message: string }> {
+    const user =
+      type === "driver"
+        ? await DriverModel.findById(data.id)
+        : await UserModel.findById(data.id);
 
-    if (rider) {
-      if (rider.otp !== data.otp) {
+    if (user) {
+      if (user.otp !== data.otp) {
         return { message: "OTPs don't match" };
       }
 
-      return this.generateTokens(rider.id);
+      return this.generateTokens(user.id);
     } else {
       return { message: "Rider not found" };
     }
@@ -94,10 +137,13 @@ class RiderService {
     return otp;
   }
 
-  async getAuth(id: string) {
-    const rider = await Rider.findById(id);
+  async getAuth(id: string, type: string) {
+    const rider =
+      type === "driver"
+        ? await DriverModel.findById(id)
+        : await UserModel.findById(id);
     if (!rider) {
-      return "Rider not found";
+      return "User not found";
     } else {
       return rider;
     }
@@ -117,4 +163,4 @@ class RiderService {
   }
 }
 
-export default new RiderService();
+export default new AuthService();

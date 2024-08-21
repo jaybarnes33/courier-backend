@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import riderService from "./Rider.service"; // Import the Rider service
+import DriverService from "./Driver.service";
 
 export const createRider = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const riderData = req.body; // Assuming the request body contains the rider data
-    console.log(riderData);
-    const newRider = await riderService.createRider(riderData);
+    const driverData = req.body; // Assuming the request body contains the rider data
+    console.log(driverData);
+    const newRider = await DriverService.createDriver(driverData);
     res.status(201).json(newRider);
   } catch (error) {
     console.log(error);
@@ -22,7 +22,7 @@ export const getRiderById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params; // Assuming the rider ID is passed as a parameter
-    const rider = await riderService.getRiderById(id);
+    const rider = await DriverService.getDriverById(id);
     if (rider) {
       res.status(200).json(rider);
     } else {
@@ -44,13 +44,13 @@ export const updateRider = async (
   try {
     console.log(req.body);
     const { id } = req.params; // Assuming the rider ID is passed as a parameter
-    const riderData = req.body; // Assuming the request body contains the updated rider data
-    const updatedRider = await riderService.updateRider(id, {
-      ...riderData,
+    const driverData = req.body; // Assuming the request body contains the updated rider data
+    const updatedRider = await DriverService.updateDriver(id, {
+      ...driverData,
       avatar: req.file?.location,
     });
     if (updatedRider) {
-      res.status(200).json(updatedRider);
+      res.status(200).json({ data: updatedRider });
     } else {
       res.status(404).json({ message: "Rider not found." });
     }
@@ -65,7 +65,7 @@ export const deleteRider = async (
 ): Promise<void> => {
   try {
     const { id } = req.params; // Assuming the rider ID is passed as a parameter
-    const deletedRider = await riderService.deleteRider(id);
+    const deletedRider = await DriverService.deleteDriver(id);
     if (deletedRider) {
       res.status(200).json(deletedRider);
     } else {
@@ -73,5 +73,18 @@ export const deleteRider = async (
     }
   } catch (error) {
     res.status(500).json({ error: "Unable to delete the rider." });
+  }
+};
+
+export const getDrivers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { status } = req.query;
+    const drivers = await DriverService.getDrivers(status as string);
+    res.status(200).json(drivers);
+  } catch (error) {
+    res.status(500).json({ error: "Unable to fetch drivers." });
   }
 };

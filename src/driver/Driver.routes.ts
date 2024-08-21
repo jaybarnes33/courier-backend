@@ -4,12 +4,14 @@ import {
   getRiderById,
   updateRider,
   deleteRider,
-} from "./Rider.controller";
+  getDrivers,
+} from "./Driver.controller";
 import { upload } from "../middleware/upload";
 
 const router = Router();
 
 router.post("/", createRider);
+router.get("/", getDrivers);
 router
   .route("/:id")
   .get(getRiderById)

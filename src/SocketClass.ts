@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import Rider from "./rider/Rider.model";
+import Rider from "./driver/Driver.model";
 
 export class WebSocketManager {
   private io: Server;
@@ -9,7 +9,7 @@ export class WebSocketManager {
     this.io = io;
 
     this.io.on("connect", (socket: Socket) => {
-      console.log("A rider connected:", socket.id);
+      console.log("A user connected:", socket.id);
 
       socket.on(
         "registerRider",

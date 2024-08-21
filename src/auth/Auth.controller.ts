@@ -7,9 +7,9 @@ export const auth = async (req: Request, res: Response): Promise<void> => {
     const authData = req.body;
     console.log(authData);
     const authRes =
-      type === "rider"
+      type === "driver"
         ? await authService.authRider(authData)
-        : { accessToken: "addafsadf", refreshToken: "hjkljkhlhjkljkademnmnmh" };
+        : await authService.authUser(authData);
     res.status(201).json(authRes);
   } catch (error) {
     console.log(error);
@@ -23,13 +23,8 @@ export const verify = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const { otp } = req.body;
     if (otp) {
-      const authRes =
-        type === "rider"
-          ? await authService.verifyOtp({ id, otp })
-          : {
-              accessToken: "addafsadf",
-              refreshToken: "hjkljkhlhjkljkademnmnmh",
-            };
+      const authRes = await authService.verifyOtp({ id, otp }, type as string);
+
       res.status(200).json(authRes);
     } else {
       res.status(400).json("OTP is required");
@@ -58,7 +53,11 @@ export const refreshToken = async (req: Request, res: Response) => {
 export const getAuth = async (req: Request, res: Response) => {
   try {
     console.log(req.user);
-    const data = await authService.getAuth(req.user.id);
+    const { type } = req.query;
+    const data = await authService.getAuth(
+      req.user.id as string,
+      type as string
+    );
     res.status(200).json(data);
   } catch (error) {
     console.log(error);

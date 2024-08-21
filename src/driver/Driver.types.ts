@@ -1,10 +1,10 @@
 import { Document, Schema } from "mongoose";
 
-export interface Rider extends Document {
+export interface Driver extends Document {
   name?: string;
   email?: string;
   otp?: string;
-  phoneNumber: string;
+  phone: string;
   password: string;
   currentLocation?: string;
   createdAt: Date;
@@ -14,5 +14,13 @@ export interface Rider extends Document {
     type: string;
     coordinates: [number, number];
   };
-  vehicleNumber?: string;
+  verificationStatus?: string;
+  vehicleDetails?: {
+    make: string;
+    model: string;
+    year: number;
+    color: string;
+    number: string;
+  };
+  verificationDocument?: string;
 }

@@ -4,9 +4,10 @@ config();
 
 import express from "express";
 
-import riderRoutes from "./rider/Rider.routes";
+import driverRoutes from "./driver/Driver.routes";
 import authRoutes from "./auth/Auth.routes";
 import packageRoutes from "./package/Package.routes";
+import userRoutes from "./user/User.routes";
 import connectDB from "./config/db";
 import { WebSocketManager } from "./SocketClass";
 import { Server } from "socket.io";
@@ -26,8 +27,9 @@ app.use(express.json());
 connectDB();
 
 //Mount routes
-app.use("/api/riders", riderRoutes);
+app.use("/api/drivers", driverRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/packages", packageRoutes);
 server.listen(process.env.PORT, () => {
   console.log("Server running on", process.env.PORT);
