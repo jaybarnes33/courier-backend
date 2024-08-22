@@ -1,9 +1,14 @@
 import { Server, Socket } from "socket.io";
-import Rider from "./driver/Driver.model";
+import Driver from "./driver/Driver.model";
 
 export class WebSocketManager {
   private io: Server;
-  private connectedRiders: { [riderId: string]: Socket } = {};
+  private connectedDrivers: {
+    [driverId: string]: {
+      socket: Socket;
+      location: { latitude: number; longitude: number };
+    };
+  } = {};
   private connectedClients: { [id: string]: Socket } = {};
   constructor(io: Server) {
     this.io = io;
@@ -12,56 +17,67 @@ export class WebSocketManager {
       console.log("A user connected:", socket.id);
 
       socket.on(
-        "registerRider",
-        (rider: {
+        "registerDriver",
+        (driver: {
           id: string;
           location: { latitude: number; longitude: number };
         }) => {
-          this.connectedRiders[rider.id] = socket;
-          console.log(`Rider registered: ${rider.id}`);
-          console.log(rider.location);
+          this.connectedDrivers[driver.id] = {
+            socket,
+            location: driver.location,
+          };
+          console.log(`Driver registered: ${driver.id}`);
+          console.log(driver.location);
         }
       );
 
       socket.on("locationUpdate", async (data) => {
-        const rider = await Rider.findByIdAndUpdate(data.id, {
+        const driver = await Driver.findByIdAndUpdate(data.id, {
           location: {
             type: "Point",
             coordinates: [data.coords.latitude, data.coords.longitude],
           },
         });
-        if (rider) {
-          console.log(rider);
+        if (driver) {
+          console.log(driver);
         }
       });
       socket.on("path", (data) => {
-        const socks = Object.values(this.getConnectedRiders())[0];
+        const socks = Object.values(this.getConnectedDrivers())[0].socket;
 
         socks.emit("path", data);
       });
-      socket.on("registerClient", async (data) => {
+      socket.on("registerClient", (data) => {
+        console.log(data);
         this.connectedClients[data.id] = socket;
         console.log("Client Connected:", data.name);
       });
-      socket.on("riderConnect", (riderName: string) => {
-        // Handle the event with the rider's name
-        console.log(`Received riderNameEvent from ${socket.id}: ${riderName}`);
+      socket.on("driverConnect", (driverName: string) => {
+        // Handle the event with the driver's name
+        console.log(
+          `Received driverNameEvent from ${socket.id}: ${driverName}`
+        );
       });
       socket.on("disconnect", () => {
-        const riderId = Object.keys(this.connectedRiders).find(
-          (key) => this.connectedRiders[key] === socket
+        const driverId = Object.keys(this.connectedDrivers).find(
+          (key) => this.connectedDrivers[key].socket === socket
         );
-        if (riderId) {
-          delete this.connectedRiders[riderId];
-          console.log(`Rider disconnected: ${riderId}`);
+        if (driverId) {
+          delete this.connectedDrivers[driverId];
+          console.log(`Driver disconnected: ${driverId}`);
         }
       });
     });
   }
 
-  // Getter method to access the connected riders
-  getConnectedRiders(): { [riderId: string]: Socket } {
-    return this.connectedRiders;
+  // Getter method to access the connected drivers
+  getConnectedDrivers(): {
+    [driverId: string]: {
+      socket: Socket;
+      location: { latitude: number; longitude: number };
+    };
+  } {
+    return this.connectedDrivers;
   }
   getConnectedClients(): { [id: string]: Socket } {
     console.log(this.connectedClients);
